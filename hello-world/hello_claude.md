@@ -184,11 +184,12 @@ somewhere you don't want.
 Move on to the other hello-world exercises — but now from inside
 Claude Code:
 
-> "Run [hello-world/hello_local.py](hello_local.py) and tell me if my
-> environment is healthy."
+> "Walk me through [test_skill.sh](../test_skill.sh) step-by-step — I
+> want to understand what it's about to do before I run it."
 
-> "Walk me through `test_skill.sh` step-by-step — I want to understand
-> what it's about to do before I run it."
+> "Run [hello-world/hello_aws.py](hello_aws.py) with my AWS profile and
+> tell me whether my SSO + S3 + Bedrock stack is healthy. Install boto3
+> first if you need to."
 
 > "I just got a fresh HPC account. Help me submit
 > [hello-world/hello_hpc.slurm](hello_hpc.slurm) end-to-end."

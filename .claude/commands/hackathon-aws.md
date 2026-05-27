@@ -31,7 +31,7 @@ then retry.
 | S3 gateway endpoint | `vpce-0ebf641ca3311f239` | Free S3 traffic from all subnets |
 | EICE endpoint | `eice-0ecadad192e23f430` | SSH to private instances |
 | EICE security group | `sg-09d5ef7889a26f56a` | `hackathon-eice-instance` |
-| IAM instance profile | `hackathon-ec2-profile` | *(pending admin)* Attach at launch |
+| IAM instance profile | `hackathon-ec2-profile` | Provisioned; attach at launch for S3 + Bedrock access |
 
 Private instances have **outbound internet** via NAT. EICE provides SSH.
 S3 traffic is free via gateway endpoint.

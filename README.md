@@ -25,11 +25,21 @@ Welcome! This page is the homepage of a **repository** — a folder of
 files tracked by Git. You don't need to learn Git to use this template.
 The fastest path:
 
-1. **Get the code on your laptop.**
-   - Easiest: click the green **`<> Code`** button at the top right of
-     the GitHub page → **Download ZIP** → unzip it somewhere you can
-     find again (Desktop is fine).
-   - Or, if you're comfortable: `git clone https://github.com/scripps-cbb/scripps-hackathon-starter`
+1. **Get the code on your laptop.** Pick whichever path fits you:
+   - **Fork (recommended if you want to keep your work).** Sign in to
+     GitHub, click **Fork** at the top right of the repo page, then
+     clone *your fork* — e.g. `git clone https://github.com/<your-username>/scripps-hackathon-starter`.
+     This gives you a personal copy you can commit to all weekend, share
+     with teammates, and revisit after the hackathon. Drop your project
+     code in a new folder of your fork (e.g. `my-project/`) so it lives
+     alongside the starter setup.
+   - **Clone read-only.** `git clone https://github.com/scripps-cbb/scripps-hackathon-starter`
+     — quickest if you already have a git account but don't plan to
+     push code back.
+   - **Download ZIP (no GitHub account needed).** Click the green
+     **`<> Code`** button → **Download ZIP** → unzip it somewhere you
+     can find again. Lowest friction; you won't be able to push your
+     code back to GitHub from this copy.
 2. **Install Claude Code** if you haven't already:
    <https://www.claude.com/product/claude-code>
 3. **Open this folder in Claude Code.** On Mac/Linux: `cd
@@ -75,6 +85,37 @@ HPC specifically.
 
 ## Quickstart
 
+> **TL;DR — one-prompt smoke test (for experienced users).** Open Claude
+> Code in any folder, paste the prompt below, and it'll clone this repo
+> and run the Hello World end-to-end. **New to all this? Skip this box
+> and follow the four numbered steps below instead — they explain what
+> you're doing as you go.**
+>
+> ```text
+> Clone https://github.com/scripps-cbb/scripps-hackathon-starter onto
+> my Desktop, cd in, then run the Hello World as a smoke test:
+>
+> - Skip hello_claude.md (the Claude Code tour) — I already know the
+>   basics.
+> - Lint hello-world/hello_hpc.slurm with `bash -n` and report any
+>   issues. Don't try to submit it.
+> - Run ./test_skill.sh against my AWS SSO profile <MY_PROFILE>. If my
+>   token is expired, tell me to run `aws sso login --profile
+>   <MY_PROFILE>` and wait for me to confirm before retrying. The
+>   script will create an S3 bucket, briefly launch a t3.micro, and
+>   terminate it — that's expected.
+> - If you can pip install boto3, also run hello-world/hello_aws.py
+>   with my profile to confirm Bedrock works.
+> - Stop and ask me before terminating or deleting anything I didn't
+>   create in this session.
+>
+> End with a punch list of any failures and what I should do next.
+> ```
+>
+> Replace `<MY_PROFILE>` with your AWS SSO profile name (both places).
+> No profile yet? Walk through [AWS_SETUP.md](AWS_SETUP.md) first, then
+> come back here.
+
 ### 1. Get fluent with Claude Code (5 minutes)
 
 Open this repo in Claude Code and follow
@@ -116,6 +157,53 @@ The first request hits the AWS slash command. The second auto-loads
 the HPC skill. The third works with either, depending on context. The
 fourth is just a normal conversation — Claude already knows what to do
 because the skills tell it.
+
+---
+
+## Shared hackathon data
+
+The organizers have pre-loaded project datasets into a shared S3
+bucket: **`s3://scrippsresearch-hackathon/`**. Once your SSO is set up
+([AWS_SETUP.md](AWS_SETUP.md)) and `aws sso login` has succeeded, you
+can browse and download with your own profile — no extra credentials.
+
+```bash
+# See what's available
+aws s3 ls s3://scrippsresearch-hackathon/ --profile <your-profile>
+
+# Peek inside a specific project
+aws s3 ls s3://scrippsresearch-hackathon/allen/ --profile <your-profile>
+
+# Pull a project's data down to your laptop (or EC2 / HPC scratch)
+mkdir -p data/allen
+aws s3 sync s3://scrippsresearch-hackathon/allen/ data/allen/ \
+  --profile <your-profile>
+```
+
+Each prefix is one team's project. **Start by reading the project's
+own docs** for context, file conventions, and what the inputs actually
+mean:
+
+| Prefix       | Topic                              | Start here                                                                                  |
+|--------------|------------------------------------|---------------------------------------------------------------------------------------------|
+| `allen/`     | PQBP1 hexamer cryo-EM + docking    | `PQBP1_Hexamer_IM_README.md` and `_UPLOAD_NOTES.md` inside the prefix                       |
+| `heberling/` | Siglec6 structural work            | `Hackathon Materials Notes JLH.pdf` |
+
+Quick way to read a project README without downloading the whole thing:
+
+```bash
+aws s3 cp s3://scrippsresearch-hackathon/allen/PQBP1_Hexamer_IM_README.md - \
+  --profile <your-profile>
+```
+
+(The trailing `-` streams to stdout.)
+
+> **Big datasets?** Copy only what you need. `aws s3 cp --recursive`
+> and `aws s3 sync` both accept `--exclude '*'` / `--include 'pattern'`
+> so you can grab e.g. just the `.pdb` files. For 10+ GB downloads,
+> consider running the `sync` from an EC2 instance instead of your
+> laptop — S3 → EC2 traffic in `us-west-2` is free via the VPC
+> gateway endpoint.
 
 ---
 

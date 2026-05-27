@@ -105,6 +105,13 @@ pip install boto3
 python hello-world/hello_aws.py --profile <your-profile>
 ```
 
+Have [`uv`](https://docs.astral.sh/uv/) instead? Skip the install and
+just run:
+
+```bash
+uv run --with boto3 hello-world/hello_aws.py --profile <your-profile>
+```
+
 You should see Claude greet you in the last step. If you do, your
 entire AWS pipeline — credentials, S3, Bedrock — is wired up.
 
