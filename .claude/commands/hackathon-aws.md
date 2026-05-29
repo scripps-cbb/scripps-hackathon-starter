@@ -317,7 +317,7 @@ Claude 4 models require an **inference profile ID** (with `us.` prefix).
 | Claude Haiku 4.5 | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | Claude Sonnet 4.5 | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 | Claude Sonnet 4.6 | `us.anthropic.claude-sonnet-4-6` |
-| Claude Opus 4.7 | `us.anthropic.claude-opus-4-7` |
+| Claude Opus 4.6 | `us.anthropic.claude-opus-4-6-v1` |
 
 ```python
 import boto3, json
