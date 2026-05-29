@@ -33,17 +33,26 @@ whose names contain any of:
 **If any are missing — STOP.** Reply to the user with exactly this and
 nothing else:
 
-> The hackathon-aws MCP servers aren't installed yet. Please run these four
-> commands, then restart Claude Code:
+> The hackathon-aws MCP servers aren't installed yet. First set your AWS SSO
+> profile name, then run these commands and restart Claude Code:
 >
 > ```bash
+> # Your AWS SSO profile name — the one you pass to `aws --profile` (e.g. inewman-wsl)
+> export AWS_SSO_PROFILE=<your-sso-profile>
+>
 > curl -LsSf https://astral.sh/uv/install.sh | sh
-> claude mcp add s3 -- uvx awslabs.s3-mcp-server@latest
-> claude mcp add aws-docs -- uvx awslabs.aws-documentation-mcp-server@latest
-> claude mcp add aws-pricing -- uvx awslabs.aws-pricing-mcp-server@latest
+>
+> # s3 and aws-pricing call AWS APIs, so they MUST be given your profile + region.
+> claude mcp add s3          -e AWS_PROFILE=$AWS_SSO_PROFILE -e AWS_REGION=us-west-2 -- uvx awslabs.s3-mcp-server@latest
+> claude mcp add aws-pricing -e AWS_PROFILE=$AWS_SSO_PROFILE -e AWS_REGION=us-west-2 -- uvx awslabs.aws-pricing-mcp-server@latest
+>
+> # aws-docs serves public documentation and needs no credentials.
+> claude mcp add aws-docs    -- uvx awslabs.aws-documentation-mcp-server@latest
 > ```
 >
-> These install globally; one-time setup for the whole hackathon.
+> One-time setup for the whole hackathon. Without `-e AWS_PROFILE=…`, the s3 and
+> aws-pricing servers fall back to default credentials (which don't exist) and
+> fail with `Unable to locate credentials`.
 
 Do **not** attempt the user's task with raw `aws` CLI / Bash fallbacks when
 the MCP servers are missing. The MCP servers exist specifically to give
@@ -60,7 +69,23 @@ What each server does:
 - **aws-docs** — real-time AWS documentation lookup
 - **aws-pricing** — live cost estimates ("how much does a g6e.xlarge cost per hour?")
 
-4 commands, one time, and they're set for the whole hackathon.
+One time, and they're set for the whole hackathon.
+
+**Troubleshooting — `Unable to locate credentials`.** If `aws-pricing` or `s3`
+is *connected* but a call fails with `Unable to locate credentials`, the server
+was added without your AWS profile. Re-add it with the credential flags, then
+restart Claude Code:
+
+```bash
+claude mcp remove aws-pricing -s local
+claude mcp add aws-pricing -e AWS_PROFILE=<your-sso-profile> -e AWS_REGION=us-west-2 \
+  -- uvx awslabs.aws-pricing-mcp-server@latest
+# (same for s3 if it's affected)
+```
+
+Confirm the fix with `claude mcp get aws-pricing` — it should list
+`AWS_PROFILE` and `AWS_REGION` under *Environment*. (If the profile's SSO token
+has simply expired, run `aws sso login --profile <your-sso-profile>` instead.)
 
 ---
 
