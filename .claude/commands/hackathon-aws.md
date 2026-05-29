@@ -1,8 +1,8 @@
 You are helping the user work with the Scripps Research 2026 Hackathon AWS
-account. You have full context on the account's infrastructure. The primary
-mechanism for S3, documentation, and pricing is the awslabs MCP servers (see
-*MCP Server Setup* below); raw `aws` CLI via Bash remains appropriate for EC2
-launch, EICE SSH, and other ops not covered by those servers.
+account. You have full context on the account's infrastructure. Documentation
+and pricing lookups go through the awslabs MCP servers (see *MCP Server Setup*
+below); raw `aws` CLI via Bash is the mechanism for S3, EC2 launch, EICE SSH,
+and other ops not covered by those servers.
 
 ## Account & region
 
@@ -22,45 +22,71 @@ then retry.
 ## MCP Server Setup — check this BEFORE anything else
 
 **Detection.** Before doing anything for the user's task, check whether the
-three awslabs MCP servers are connected. Look in the available-tools list
+two awslabs MCP servers are connected. Look in the available-tools list
 (including the deferred-tool list surfaced in system reminders) for tools
 whose names contain any of:
 
 - `aws-pricing`
 - `aws-documentation` (or `aws-docs`)
-- `s3-mcp-server` (or `s3` from an `awslabs` namespace)
+
+(S3 has no dedicated MCP server — there is no general-purpose awslabs S3
+object-browsing server. Use the `aws` CLI for all S3 work; see *S3 buckets*
+below.)
 
 **If any are missing — STOP.** Reply to the user with exactly this and
 nothing else:
 
-> The hackathon-aws MCP servers aren't installed yet. Please run these four
-> commands, then restart Claude Code:
+> The hackathon-aws MCP servers aren't installed yet. First set your AWS SSO
+> profile name, then run these commands and restart Claude Code:
 >
 > ```bash
+> # Your AWS SSO profile name — the one you pass to `aws --profile` (e.g. inewman-wsl)
+> export AWS_SSO_PROFILE=<your-sso-profile>
+>
 > curl -LsSf https://astral.sh/uv/install.sh | sh
-> claude mcp add s3 -- uvx awslabs.s3-mcp-server@latest
-> claude mcp add aws-docs -- uvx awslabs.aws-documentation-mcp-server@latest
-> claude mcp add aws-pricing -- uvx awslabs.aws-pricing-mcp-server@latest
+>
+> # aws-pricing calls AWS APIs, so it MUST be given your profile + region.
+> claude mcp add aws-pricing -e AWS_PROFILE=$AWS_SSO_PROFILE -e AWS_REGION=us-west-2 -- uvx awslabs.aws-pricing-mcp-server@latest
+>
+> # aws-docs serves public documentation and needs no credentials.
+> claude mcp add aws-docs    -- uvx awslabs.aws-documentation-mcp-server@latest
 > ```
 >
-> These install globally; one-time setup for the whole hackathon.
+> One-time setup for the whole hackathon. Without `-e AWS_PROFILE=…`, the
+> aws-pricing server falls back to default credentials (which don't exist) and
+> fails with `Unable to locate credentials`.
 
-Do **not** attempt the user's task with raw `aws` CLI / Bash fallbacks when
-the MCP servers are missing. The MCP servers exist specifically to give
-better, structured answers (live pricing, doc lookups, S3 browsing); falling
-back defeats the point and produces worse results. Reply with the install
-instructions and wait for the user to restart.
+Do **not** attempt pricing/doc lookups with raw `aws` CLI / Bash fallbacks when
+these MCP servers are missing. They exist specifically to give better,
+structured answers (live pricing, doc lookups); falling back defeats the point
+and produces worse results. Reply with the install instructions and wait for the
+user to restart. (S3 work always uses the `aws` CLI — that's expected, not a
+fallback.)
 
-**If all three are connected**, proceed with the user's task using the MCP
-tools as the primary mechanism. Bash `aws` CLI remains appropriate for EC2
-launch, EICE SSH, IAM, and other ops not covered by these three servers.
+**If both are connected**, proceed with the user's task using the MCP tools for
+pricing and docs. Bash `aws` CLI is the mechanism for S3, EC2 launch, EICE SSH,
+IAM, and other ops not covered by these servers.
 
 What each server does:
-- **s3** — browse buckets, read/write objects, access Open Data directly
 - **aws-docs** — real-time AWS documentation lookup
 - **aws-pricing** — live cost estimates ("how much does a g6e.xlarge cost per hour?")
 
-4 commands, one time, and they're set for the whole hackathon.
+One time, and they're set for the whole hackathon.
+
+**Troubleshooting — `Unable to locate credentials`.** If `aws-pricing` is
+*connected* but a call fails with `Unable to locate credentials`, the server
+was added without your AWS profile. Re-add it with the credential flags, then
+restart Claude Code:
+
+```bash
+claude mcp remove aws-pricing -s local
+claude mcp add aws-pricing -e AWS_PROFILE=<your-sso-profile> -e AWS_REGION=us-west-2 \
+  -- uvx awslabs.aws-pricing-mcp-server@latest
+```
+
+Confirm the fix with `claude mcp get aws-pricing` — it should list
+`AWS_PROFILE` and `AWS_REGION` under *Environment*. (If the profile's SSO token
+has simply expired, run `aws sso login --profile <your-sso-profile>` instead.)
 
 ---
 
@@ -291,7 +317,7 @@ Claude 4 models require an **inference profile ID** (with `us.` prefix).
 | Claude Haiku 4.5 | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | Claude Sonnet 4.5 | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 | Claude Sonnet 4.6 | `us.anthropic.claude-sonnet-4-6` |
-| Claude Opus 4.7 | `us.anthropic.claude-opus-4-7` |
+| Claude Opus 4.6 | `us.anthropic.claude-opus-4-6-v1` |
 
 ```python
 import boto3, json
